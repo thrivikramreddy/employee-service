@@ -2,6 +2,7 @@ pipeline {
   agent any
   tools { 
         maven 'Maven'
+    
   }
   stages {
     stage('Clone repository') {
@@ -22,23 +23,25 @@ pipeline {
         sh '/usr/bin/docker build -t employee-service .'
       }
     }   
-    stage('push image to ECR'){ 
+    stage('push image to ECR'){
       steps {
-        withDockerRegistry(credentialsId: 'ecr:us-east-1:aws-credentials', url: 'http://092390458462.dkr.ecr.us-east-1.amazonaws.com/employee-service') {
-          sh 'docker tag employee-service:latest 092390458462.dkr.ecr.us-east-1.amazonaws.com/employee-service:latest'
-         sh 'docker push 092390458462.dkr.ecr.us-east-1.amazonaws.com/employee-service:latest'
+        withDockerRegistry(credentialsId: 'ecr:us-west-2:aws-credentials', url: 'http://037217839351.dkr.ecr.us-west-2.amazonaws.com/employee-service') {
+          sh 'docker tag employee-service:latest 037217839351.dkr.ecr.us-west-2.amazonaws.com/employee-service:latest'
+         sh 'docker push 037217839351.dkr.ecr.us-west-2.amazonaws.com/employee-service:latest'
         } 
       }
     }
     stage('deploy to ECR') {
       steps {
-        node('eks-master-node'){
-          checkout scm
-         sh 'kubectl apply -f deployment.yaml' 
-         sh 'kubectl apply -f service.yaml' 
+      node('eks'){    
+        checkout scm
+        sh 'export KUBECONFIG=~/.kube/config'
+        sh 'aws eks update-kubeconfig --name eks-master --region us-west-2'
+        sh 'kubectl get svc'
+        sh 'kubectl apply -f deployment.yaml'
+        sh 'kubectl apply -f service.yaml'
         }
       }
     }
   }
 }
-
