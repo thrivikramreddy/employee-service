@@ -31,6 +31,7 @@ pipeline {
         } 
       }
     }
+    
     stage('deploy to ECR') {
       steps {
       node('eks'){    
